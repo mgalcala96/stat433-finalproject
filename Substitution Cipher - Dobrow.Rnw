@@ -1,4 +1,4 @@
-s\documentclass{article}
+\documentclass{article}
 
 \begin{document}
 <<>>=
