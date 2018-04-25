@@ -10,7 +10,7 @@ message <- "coincidences in general are great stumbling blocks in the way of tha
 
 
 mat <- read.table("~/Downloads/Archive/AustenCount.txt",header=F)
-logmat <- log(mat + 2)
+logmat <- log(mat + 1)
 
 # Computes the score of the decoded message using the given code
 score <- function(code)
