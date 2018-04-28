@@ -1,14 +1,18 @@
 \documentclass{article}
 
 \begin{document}
+
+\documentclass{article}
+
+\begin{document}
 <<>>=
 # Vignere Cipher.R
 library(tm)
-message <- "coincidences in general are great stumbling blocks in the way of that class of thinkers who have been educated to know nothing of the theory of probabilities that theory to which the most glorious objects of human research are indebted for the most glorious of illustrations edgar allen poe the murders in the rue morgue morpheus this is your last chance after this there is no turning back you take the blue pill the story ends you wake up in your bed and believe whatever you want to believe you take the red pill you stay in wonderland and i show you how deep the rabbit hole goes"
+message <- "coincidencesingeneralaregreatstumblingblocksinthewayofthatclassofthinkerswhohavebeeneducatedtoknownothingofthetheoryofprobabilitiesthattheorytowhichthemostgloriousobjectsofhumanresearchareindebtedforthemostgloriousofillustrationsedgarallenpoethemurdersintheruemorguemorpheusthisisyourlastchanceafterthisthereisnoturningbackyoutakethebluepillthestoryendsyouwakeupinyourbedandbelievewhateveryouwanttobelieveyoutaketheredpillyoustayinwonderlandandishowyouhowdeeptherabbitholegoes"
 
 
 mat <- read.table("~/Downloads/Archive/AustenCount.txt",header=F)
-logmat <- log(mat + 2)
+logmat <- log(mat + 1)
 
 # Computes the score of the decoded message using the given code
 #This was updated so that it looks at the length of the code it is given, not just message
@@ -17,7 +21,7 @@ vscore <- function(code)
 	p <- 0
 	# For each pair of letters in the decoded message
 	# query the transition matrix for the probability of that pair
-	for (i in 1:(nchar(code)-1)){
+	for (i in 1:(nchar(message)-1)){
 		p <- p + logmat[charIndex(substr(code, i, i)),charIndex(substr(code, i+1, i+1))]
 	}
 	# return the sum of these probabilities
@@ -55,11 +59,9 @@ indexToChar<-function(numeric){
     " "
   }
   else{
-  
   rawToChar(as.raw(aValue))
   }
 }
-
 
 #Vigenere encryption function
 library(splus2R)
@@ -77,50 +79,56 @@ vigen = function(input, key, decrypt = F)
     paste(collapse = "", LETTERS[
         mod1(input + (if (decrypt) -1 else 1)*key, length(LETTERS))])}
 
-(vigen("Beware the Jabberwock, my son! The jaws that bite, the claws that catch!", "vigenerecipher"))
-                
-## Example: message(vigen("this is a cipher","vigenerecipher"))
+## Example: message(vigen("this is a cipher","manu"))
 
 #This encrypts our message
-codemess<-tolower(vigen(message,"manu"))
+
+random<-(sample(1:26,26))
+for(i in 1:length(random)){
+  trueKey[i]<-indexToChar(random[i])
+}
+trueKey<- paste(trueKey,collapse="")
+
+codemess<-tolower(vigen(message,trueKey,decrypt=F))
+
 
 # instantiate a map to hold previously computed codes' scores
 map <- new.env(hash=T, parent=emptyenv())
 
 # we begin by generating a 5-letter word at random
-holdWord <-(sample(1:26,5))
+curKey<-1:26
+holdWord<-1:26
 for(i in 1:length(holdWord)){
-  curWord[i]<-indexToChar(holdWord[i])
+  curKey[i]<-indexToChar(holdWord[i])
 }
-curWord<- paste(curWord,collapse="")
+curKey<- paste(curKey,collapse="")
 # calculate the score for curFunc and store it in the map
-oldScore <- vscore(tolower(vigen(codemess,curWord,decrypt=T)))
-map[[paste(curWord, collapse='')]] <- oldScore
+oldScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
+map[[paste(curKey, collapse='')]] <- oldScore
 
 # run 7000 iterations of the Metropolis-Hastings algorithm
-for (iteration in 1:7000) {
-	# sample two letters to swap
-	holdNewWord <-(sample(1:26,5))
-for(i in 1:length(holdNewWord)){
-  newKey[i]<-indexToChar(holdNewWord[i])
-}
-	newKey<-paste(newKey, collapse="")
+for (iteration in 1:2000) {
+	# sample one letter to switch at random
+  oldKey<-curKey
+  i<-sample(1:26,1)
+  substr(curKey,i,i)<-indexToChar(sample(1:26,1))
+ 
 	# if we have already scored this decoding,
 	# retrieve score from our map
-	if (exists(paste(newKey, collapse =''), map)){
-		newScore <- map[[paste(newKey, collapse ='')]]
+	if (exists(paste(curKey, collapse =''), map)){
+		newScore <- map[[paste(curKey, collapse ='')]]
 	} else
 	# if we have not already scored this decoding,
 	# calculate it and store it in the map
 	{
-		newScore <- vscore(tolower(vigen(codemess,newKey,decrypt=T)))
-		map[[paste(newKey, collapse = '')]] <- newScore
+		newScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
+		map[[paste(curKey, collapse = '')]] <- newScore
 	}
 	
 	# decide whether to accept curFunc or to revert to oldFunc
 	if (runif(1) > exp(newScore-oldScore))
 	{
-		curWord <- newKey
+		curKey <-oldKey
 	} else 
 	{
 		oldScore <- newScore
@@ -129,8 +137,8 @@ for(i in 1:length(holdNewWord)){
 	# print out our decryption every 100 iterations
 	if ((iteration %%  100) == 0)
 	{
-		print(c(iteration,tolower(vigen(codemess,curWord,decrypt=T))))
+		print(c(iteration,tolower(vigen(codemess,curKey,decrypt=T))))
 	}
 }
-@
+
 \end{document}
