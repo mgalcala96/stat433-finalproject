@@ -93,7 +93,7 @@ codemess<-tolower(vigen(message,trueKey,decrypt=F))
 
 # instantiate a map to hold previously computed codes' scores
 map <- new.env(hash=T, parent=emptyenv())
-storekey <- as.data.frame(matrix(rep(0,20),ncol=2))
+storeKey <- matrix(rep(0,20),ncol=2)
 # we begin by generating a 5-letter word at random
 
 for(i in 1:length(holdWord)){
@@ -104,15 +104,18 @@ curKey<- paste(curKey,collapse="")
 oldScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
 map[[paste(curKey, collapse='')]] <- oldScore
 
-
+##########################################################
 # run 7000 iterations of the Metropolis-Hastings algorithm
 for (v in 1:10){
-curKey<-1:v
-holdWord<-1:v
+holdword <- 1:v
+  for (j in 1:v){
+    curKey[j]<-indexToChar(holdword[j])
+  }
+curKey<-paste(curKey,collapse="")
 for (iteration in 1:2000) {
 	# sample one letter to switch at random
   oldKey<-curKey
-  i<-sample(1:26,1)
+  i<-sample(1:nchar(curKey),1)
   substr(curKey,i,i)<-indexToChar(sample(1:26,1))
  
 	# if we have already scored this decoding,
@@ -145,6 +148,7 @@ for (iteration in 1:2000) {
 }
 storeKey[v,1] <- curKey
 storeKey[v,2] <- oldScore
+print(c(storeKey[v,1],storeKey[v,2]))
 }
 @
 
