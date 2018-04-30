@@ -7,7 +7,7 @@
 library(tm)
 message <- "coincidencesingeneralaregreatstumblingblocksinthewayofthatclassofthinkerswhohavebeeneducatedtoknownothingofthetheoryofprobabilitiesthattheorytowhichthemostgloriousobjectsofhumanresearchareindebtedforthemostgloriousofillustrationsedgarallenpoethemurdersintheruemorguemorpheusthisisyourlastchanceafterthisthereisnoturningbackyoutakethebluepillthestoryendsyouwakeupinyourbedandbelievewhateveryouwanttobelieveyoutaketheredpillyoustayinwonderlandandishowyouhowdeeptherabbitholegoes"
 
-mat <- read.table("~/Downloads/Archive/AustenCount.txt",header=F)
+mat <- read.table("~/Documents/AustenCount.txt",header=F)
 logmat <- log(mat + 1)
 
 # Computes the score of the decoded message using the given code
@@ -83,6 +83,7 @@ vigen = function(input, key, decrypt = F)
 keyLength<-(sample(1:10,1))
 
 random<-(sample(1:26,keyLength))
+trueKey<-1:length(random)
 for(i in 1:length(random)){
   trueKey[i]<-indexToChar(random[i])
 }
@@ -96,6 +97,9 @@ map <- new.env(hash=T, parent=emptyenv())
 storeKey <- matrix(rep(0,20),ncol=2)
 # we begin by generating a 5-letter word at random
 
+for (v in 1:10){
+curKey<-1:v
+holdWord<-1:v
 for(i in 1:length(holdWord)){
   curKey[i]<-indexToChar(holdWord[i])
 }
@@ -106,49 +110,43 @@ map[[paste(curKey, collapse='')]] <- oldScore
 
 ##########################################################
 # run 7000 iterations of the Metropolis-Hastings algorithm
-for (v in 1:10){
-holdword <- 1:v
-  for (j in 1:v){
-    curKey[j]<-indexToChar(holdword[j])
-  }
-curKey<-paste(curKey,collapse="")
-for (iteration in 1:2000) {
-	# sample one letter to switch at random
-  oldKey<-curKey
-  i<-sample(1:nchar(curKey),1)
-  substr(curKey,i,i)<-indexToChar(sample(1:26,1))
+  for (iteration in 1:2000) {
+	  # sample one letter to switch at random
+    oldKey<-curKey
+    i<-sample(1:nchar(curKey),1)
+    substr(curKey,i,i)<-indexToChar(sample(1:26,1))
  
-	# if we have already scored this decoding,
-	# retrieve score from our map
-	if (exists(paste(curKey, collapse =''), map)){
-		newScore <- map[[paste(curKey, collapse ='')]]
-	} else
-	# if we have not already scored this decoding,
-	# calculate it and store it in the map
-	{
-		newScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
-		map[[paste(curKey, collapse = '')]] <- newScore
-	}
+	  # if we have already scored this decoding,
+	  # retrieve score from our map
+	  if (exists(paste(curKey, collapse =''), map)){
+	  	newScore <- map[[paste(curKey, collapse ='')]]
+	  } else
+	  # if we have not already scored this decoding,
+	  # calculate it and store it in the map
+	  {
+	  	newScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
+	  	map[[paste(curKey, collapse = '')]] <- newScore
+	  }
+	  
+	  # decide whether to accept curFunc or to revert to oldFunc
+	  if (runif(1) > exp(newScore-oldScore))
+	  {
+	  	curKey <-oldKey
+	  } else 
+	  {
+	  	oldScore <- newScore
+	  }
 	
-	# decide whether to accept curFunc or to revert to oldFunc
-	if (runif(1) > exp(newScore-oldScore))
-	{
-		curKey <-oldKey
-	} else 
-	{
-		oldScore <- newScore
-	}
-	
-	# print out our decryption every 100 iterations
-	# if ((iteration %%  100) == 0)
-	# {
-	# 	print(c(iteration,tolower(vigen(codemess,curKey,decrypt=T))))
-	#   print(curKey)
-	# }
-}
-storeKey[v,1] <- curKey
-storeKey[v,2] <- oldScore
-print(c(storeKey[v,1],storeKey[v,2]))
+	  # print out our decryption every 100 iterations
+	  # if ((iteration %%  100) == 0)
+	  # {
+	  # 	print(c(iteration,tolower(vigen(codemess,curKey,decrypt=T))))
+	  #   print(curKey)
+	  # }
+  }
+  storeKey[v,1] <- curKey
+  storeKey[v,2] <- oldScore
+  print(c(storeKey[v,1],storeKey[v,2]))
 }
 @
 
