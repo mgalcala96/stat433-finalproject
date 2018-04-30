@@ -87,7 +87,8 @@ trueKey<-1:length(random)
 for(i in 1:length(random)){
   trueKey[i]<-indexToChar(random[i])
 }
-trueKey<- paste(trueKey,collapse="")
+# trueKey<- paste(trueKey,collapse="")
+trueKey <- "noahmanu"
 
 codemess<-tolower(vigen(message,trueKey,decrypt=F))
 
@@ -147,6 +148,10 @@ map[[paste(curKey, collapse='')]] <- oldScore
   storeKey[v,1] <- curKey
   storeKey[v,2] <- oldScore
   print(c(storeKey[v,1],storeKey[v,2]))
+  if (v==10){
+  print(c(tolower(vigen(codemess,storeKey[which.max(storeKey[,2]),1],decrypt=T))))
+  print(paste("The keyword is",storeKey[which.max(storeKey[,2]),1],"!"))
+  }
 }
 @
 
