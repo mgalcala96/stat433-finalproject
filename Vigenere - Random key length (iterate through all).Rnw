@@ -95,8 +95,8 @@ codemess<-tolower(vigen(message,trueKey,decrypt=F))
 # instantiate a map to hold previously computed codes' scores
 map <- new.env(hash=T, parent=emptyenv())
 storeKey <- matrix(rep(0,20),ncol=2)
-# we begin by generating a 5-letter word at random
 
+############## BEGIN LOOP ################################
 for (v in 1:10){
 curKey<-1:v
 holdWord<-1:v
