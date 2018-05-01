@@ -1,0 +1,166 @@
+\documentclass{article}
+
+\begin{document}
+
+<<>>=
+# Vignere Cipher.R
+library(tm)
+message <- "coincidencesingeneralaregreatstumblingblocksinthewayofthatclassofthinkerswhohavebeeneducatedtoknownothingofthetheoryofprobabilitiesthattheorytowhichthemostgloriousobjectsofhumanresearchareindebtedforthemostgloriousofillustrationsedgarallenpoethemurdersintheruemorguemorpheusthisisyourlastchanceafterthisthereisnoturningbackyoutakethebluepillthestoryendsyouwakeupinyourbedandbelievewhateveryouwanttobelieveyoutaketheredpillyoustayinwonderlandandishowyouhowdeeptherabbitholegoes"
+
+mat <- read.table("~/Documents/AustenCount.txt",header=F)
+logmat <- log(mat + 1)
+
+# Computes the score of the decoded message using the given code
+#This was updated so that it looks at the length of the code it is given, not just message
+vscore <- function(code)
+{  
+	p <- 0
+	# For each pair of letters in the decoded message
+	# query the transition matrix for the probability of that pair
+	for (i in 1:(nchar(message)-1)){
+		p <- p + logmat[charIndex(substr(code, i, i)),charIndex(substr(code, i+1, i+1))]
+	}
+	# return the sum of these probabilities
+	p
+}
+
+# ascii(char) returns the numerical ascii value for char
+ascii <- function(char)
+{ 
+	strtoi(charToRaw(char),16L) #get 'raw' ascii value
+} 
+
+# charIndex takes in a character and returns its 'char value'
+# defined as a=1, b=2, ..., z=26, space=27
+# this matches the array created by read.table
+charIndex <- function(char)
+{
+	aValue <- ascii(char)
+	if (aValue == 32)
+	{
+		# return 27 if a space
+		27
+	} else
+	{
+		#ascii sets "a" as 97, so subtract 96
+		aValue - 96 
+	}
+}
+
+indexToChar<-function(numeric){
+  aValue<- numeric + 96
+  if (numeric == 27)
+	{
+		# return space if a 27
+    " "
+  }
+  else{
+  rawToChar(as.raw(aValue))
+  }
+}
+
+#Vigenere encryption function
+library(splus2R)
+mod1 = function(v, n){
+# mod1(1:20, 6)   =>   1 2 3 4 5 6 1 2 3 4 5 6 1 2 3 4 5 6 1 2
+    ((v - 1) %% n) + 1
+ }
+str2ints = function(s){
+    as.integer(Filter(Negate(is.na),
+        factor(levels = LETTERS, strsplit(toupper(s), "")[[1]])))
+}
+vigen = function(input, key, decrypt = F)
+   {input = str2ints(input)
+    key = rep(str2ints(key), len = length(input)) - 1
+    paste(collapse = "", LETTERS[
+        mod1(input + (if (decrypt) -1 else 1)*key, length(LETTERS))])}
+
+## Example: message(vigen("this is a cipher","manu"))
+
+#This encrypts our message
+
+#Obtain length of key
+keyLength<-(sample(1:10,1))
+
+random<-(sample(1:26,keyLength))
+trueKey<-1:length(random)
+for(i in 1:length(random)){
+  trueKey[i]<-indexToChar(random[i])
+}
+trueKey<- paste(trueKey,collapse="")
+# trueKey <- "noahmanu"
+
+codemess<-tolower(vigen(message,trueKey,decrypt=F))
+
+
+# instantiate a map to hold previously computed codes' scores
+map <- new.env(hash=T, parent=emptyenv())
+storeKey <- matrix(rep(0,30),ncol=3)
+
+############## BEGIN LOOP ################################
+for (v in 1:10){
+starttime <- Sys.time()
+curKey<-1:v
+holdWord<-1:v
+for(i in 1:length(holdWord)){
+  curKey[i]<-indexToChar(holdWord[i])
+}
+curKey<- paste(curKey,collapse="")
+# calculate the score for curFunc and store it in the map
+oldScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
+map[[paste(curKey, collapse='')]] <- oldScore
+
+# run 2000 iterations of the Metropolis-Hastings algorithm
+  for (iteration in 1:2000) {
+	  # sample one letter to switch at random
+    oldKey<-curKey
+    newthing<-sample(1:26,v)
+    for(m in 1:v){
+      curKey[m]<-indexToChar(newthing[m])
+    }
+    curKey<-paste(curKey,collapse="")
+    
+	  # if we have already scored this decoding,
+	  # retrieve score from our map
+	  if (exists(paste(curKey, collapse =''), map)){
+	  	newScore <- map[[paste(curKey, collapse ='')]]
+	  } else
+	  # if we have not already scored this decoding,
+	  # calculate it and store it in the map
+	  {
+	  	newScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
+	  	map[[paste(curKey, collapse = '')]] <- newScore
+	  }
+	  
+	  # decide whether to accept curFunc or to revert to oldFunc
+	  if (runif(1) > exp(newScore-oldScore))
+	  {
+	  	curKey <-oldKey
+	  } else 
+	  {
+	  	oldScore <- newScore
+	  }
+	
+	  # print out our decryption every 100 iterations
+	  # if ((iteration %%  100) == 0)
+	  # {
+	  # 	print(c(iteration,tolower(vigen(codemess,curKey,decrypt=T))))
+	  #   print(curKey)
+	  # }
+  }
+  endtime <- Sys.time()
+  dur <- endtime - starttime
+  storeKey[v,1] <- curKey
+  storeKey[v,2] <- oldScore
+  storeKey[v,3] <- dur
+  print(c(storeKey[v,1],storeKey[v,2],storeKey[v,3]))
+  if (v==10){
+  print(c(tolower(vigen(codemess,storeKey[which.max(storeKey[,2]),1],decrypt=T))))
+  print(paste("The keyword is",storeKey[which.max(storeKey[,2]),1],"!"))
+  }
+}
+library(ggplot2)
+plot(storeKey[,3],type="l")
+@
+
+\end{document}
