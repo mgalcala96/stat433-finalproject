@@ -95,7 +95,7 @@ codemess<-tolower(vigen(message,trueKey,decrypt=F))
 
 # instantiate a map to hold previously computed codes' scores
 map <- new.env(hash=T, parent=emptyenv())
-storeKey <- matrix(rep(0,30),ncol=3)
+BStoreKey <- matrix(rep(0,30),ncol=3)
 
 ############## BEGIN LOOP ################################
 for (v in 1:10){
@@ -114,9 +114,12 @@ map[[paste(curKey, collapse='')]] <- oldScore
   for (iteration in 1:2000) {
 	  # sample one letter to switch at random
     oldKey<-curKey
-    i<-sample(1:nchar(curKey),1)
-    substr(curKey,i,i)<-indexToChar(sample(1:26,1))
- 
+    newthing<-sample(1:26,v)
+    for(m in 1:v){
+      curKey[m]<-indexToChar(newthing[m])
+    }
+    curKey<-paste(curKey,collapse="")
+    
 	  # if we have already scored this decoding,
 	  # retrieve score from our map
 	  if (exists(paste(curKey, collapse =''), map)){
@@ -147,25 +150,17 @@ map[[paste(curKey, collapse='')]] <- oldScore
   }
   endtime <- Sys.time()
   dur <- endtime - starttime
-  storeKey[v,1] <- curKey
-  storeKey[v,2] <- oldScore
-  storeKey[v,3] <- dur
-  print(c(storeKey[v,1],storeKey[v,2],storeKey[v,3]))
+  BStoreKey[v,1] <- curKey
+  BStoreKey[v,2] <- oldScore
+  BStoreKey[v,3] <- dur
+  print(c(BStoreKey[v,1],BStoreKey[v,2],BStoreKey[v,3]))
   if (v==10){
-  print(c(tolower(vigen(codemess,storeKey[which.max(storeKey[,2]),1],decrypt=T))))
-  print(paste("The keyword is",storeKey[which.max(storeKey[,2]),1],"!"))
+  print(c(tolower(vigen(codemess,BStoreKey[which.max(BStoreKey[,2]),1],decrypt=T))))
+  print(paste("The keyword is",BStoreKey[which.max(BStoreKey[,2]),1],"!"))
   }
 }
 library(ggplot2)
-plot(storeKey[,3],type="l")
-library(zoo)
-library(data.table)
-KK <- data.table(cbind(as.numeric(storeKey[,3]),as.numeric(BStoreKey[,3])))
-plot.zoo(KK, 
-         plot.type = "single", 
-         col = c("red", "blue"), xlab = "Key Length", ylab = "Runtime", main = "Runtime Comparison")
-legend("bottomright", legend=c("Brute Force","Random Switch"),
-       lty=c(1,1), lwd=c(2,2), col=c("blue","red"),cex=.5)
+plot(BStoreKey[,3],type="l")
 @
 
 \end{document}
