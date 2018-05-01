@@ -87,15 +87,15 @@ trueKey<-1:length(random)
 for(i in 1:length(random)){
   trueKey[i]<-indexToChar(random[i])
 }
-trueKey<- paste(trueKey,collapse="")
-# trueKey <- "noahmanu"
+# trueKey<- paste(trueKey,collapse="")
+trueKey <- "noahmanu"
 
 codemess<-tolower(vigen(message,trueKey,decrypt=F))
 
 
 # instantiate a map to hold previously computed codes' scores
 map <- new.env(hash=T, parent=emptyenv())
-storeKey <- matrix(rep(0,30),ncol=3)
+BStoreKey <- matrix(rep(0,30),ncol=3)
 
 ############## BEGIN LOOP ################################
 for (v in 1:10){
@@ -150,17 +150,17 @@ map[[paste(curKey, collapse='')]] <- oldScore
   }
   endtime <- Sys.time()
   dur <- endtime - starttime
-  storeKey[v,1] <- curKey
-  storeKey[v,2] <- oldScore
-  storeKey[v,3] <- dur
-  print(c(storeKey[v,1],storeKey[v,2],storeKey[v,3]))
+  BStoreKey[v,1] <- curKey
+  BStoreKey[v,2] <- oldScore
+  BStoreKey[v,3] <- dur
+  print(c(BStoreKey[v,1],BStoreKey[v,2],BStoreKey[v,3]))
   if (v==10){
-  print(c(tolower(vigen(codemess,storeKey[which.max(storeKey[,2]),1],decrypt=T))))
-  print(paste("The keyword is",storeKey[which.max(storeKey[,2]),1],"!"))
+  print(c(tolower(vigen(codemess,BStoreKey[which.max(BStoreKey[,2]),1],decrypt=T))))
+  print(paste("The keyword is",BStoreKey[which.max(BStoreKey[,2]),1],"!"))
   }
 }
 library(ggplot2)
-plot(storeKey[,3],type="l")
+plot(BStoreKey[,3],type="l")
 @
 
 \end{document}
