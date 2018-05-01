@@ -109,8 +109,7 @@ curKey<- paste(curKey,collapse="")
 oldScore <- vscore(tolower(vigen(codemess,curKey,decrypt=T)))
 map[[paste(curKey, collapse='')]] <- oldScore
 
-##########################################################
-# run 7000 iterations of the Metropolis-Hastings algorithm
+# run 2000 iterations of the Metropolis-Hastings algorithm
   for (iteration in 1:2000) {
 	  # sample one letter to switch at random
     oldKey<-curKey
